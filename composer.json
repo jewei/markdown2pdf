@@ -1,0 +1,28 @@
+{
+    "name": "jewei/markdown2pdf",
+    "description": "Convert markdown file to PDF.",
+    "type": "project",
+    "require": {
+        "dompdf/dompdf": "^0.7.0",
+        "cebe/markdown": "^1.1",
+        "symfony/console": "^3.0",
+        "symfony/filesystem": "^3.0",
+        "monolog/monolog": "^1.18"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jewei Mak",
+            "email": "jewei.mak@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Jewei\\Markdown2pdf\\": "src/"
+        },
+        "exclude-from-classmap": [
+            "tests/"
+        ]
+    }
+}
