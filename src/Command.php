@@ -44,13 +44,6 @@ class Command extends SymfonyCommand
                 'Determine which CSS file to load.',
                 'example.css'
             )
-            ->addOption(
-                'flavor',
-                null,
-                InputOption::VALUE_OPTIONAL,
-                'Determine markdown flavor. traditional | github | extra',
-                'traditional'
-            )
         ;
     }
 
@@ -72,7 +65,6 @@ class Command extends SymfonyCommand
         $generator->setMarkdownFile($input->getArgument('input_file'));
         $generator->setPDFFile($input->getArgument('output_file'));
         $generator->setCSSFile($input->getOption('css'));
-        $generator->setFlavor($input->getOption('flavor'));
 
         if (!$generator->convert()) {
             $output->writeln(sprintf('<error>Error: %s</error>', $generator->getError()));

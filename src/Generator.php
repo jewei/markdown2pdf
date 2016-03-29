@@ -4,6 +4,7 @@ namespace Jewei\Markdown2pdf;
 
 use Dompdf\Css\Stylesheet;
 use Dompdf\Dompdf;
+use League\CommonMark\CommonMarkConverter;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -43,13 +44,6 @@ class Generator
      * @var  string
      */
     private $css;
-
-    /**
-     * The markdown flavor.
-     *
-     * @var  string
-     */
-    private $flavor;
 
     /**
      * The error message.
@@ -93,22 +87,8 @@ class Generator
 
         $this->logger->debug(sprintf('CSS: %s', $this->css));
 
-        switch ($this->flavor) {
-            case 'extra':
-                $parser = new \cebe\markdown\MarkdownExtra();
-                break;
-
-            case 'github':
-                $parser = new \cebe\markdown\GithubMarkdown();
-                break;
-
-            case 'traditional':
-            default:
-                $parser = new \cebe\markdown\Markdown();
-                break;
-        }
-
-        $markdown = $parser->parse($markdown);
+        $parser = new CommonMarkConverter();
+        $markdown = $parser->convertToHtml($markdown);
 
         $html = <<<EOD
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
@@ -168,16 +148,6 @@ EOD;
     public function setCSSFile($file)
     {
         $this->css =  $file;
-    }
-
-    /**
-     * Set the Markdown flavor.
-     *
-     * @param  string  $flavor
-     */
-    public function setFlavor($flavor)
-    {
-        $this->flavor =  $flavor;
     }
 
     /**

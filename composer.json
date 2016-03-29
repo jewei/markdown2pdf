@@ -4,10 +4,10 @@
     "type": "project",
     "require": {
         "dompdf/dompdf": "^0.7.0",
-        "cebe/markdown": "^1.1",
         "symfony/console": "^3.0",
         "symfony/filesystem": "^3.0",
-        "monolog/monolog": "^1.18"
+        "monolog/monolog": "^1.18",
+        "league/commonmark": "^0.13.2"
     },
     "license": "MIT",
     "authors": [

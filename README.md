@@ -10,7 +10,7 @@ Convert Markdown to PDF file.
 
     bin/console generate:file example.md example.pdf
 
-    // Set custom CSS and markdown flavor.
+    // Set custom CSS.
     bin/console generate:file example.md example.pdf --css=example.css --style=traditional
 
 ## Usage
