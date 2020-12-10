@@ -3,11 +3,11 @@
     "description": "Convert markdown file to PDF.",
     "type": "project",
     "require": {
-        "dompdf/dompdf": "^0.7.0",
-        "symfony/console": "^3.0",
-        "symfony/filesystem": "^3.0",
-        "monolog/monolog": "^1.18",
-        "league/commonmark": "^0.13.2"
+        "dompdf/dompdf": "^0.8.6",
+        "symfony/console": "^5.2",
+        "symfony/filesystem": "^5.2",
+        "monolog/monolog": "^2.1",
+        "league/commonmark": "^1.5.7"
     },
     "license": "MIT",
     "authors": [

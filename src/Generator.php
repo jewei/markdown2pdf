@@ -2,7 +2,6 @@
 
 namespace Jewei\Markdown2pdf;
 
-use Dompdf\Css\Stylesheet;
 use Dompdf\Dompdf;
 use League\CommonMark\CommonMarkConverter;
 use Psr\Log\LoggerInterface;
@@ -90,6 +89,8 @@ class Generator
         $parser = new CommonMarkConverter();
         $markdown = $parser->convertToHtml($markdown);
 
+        $this->css = file_get_contents(dirname(__DIR__) . '/' . $this->css);
+
         $html = <<<EOD
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
     "http://www.w3.org/TR/html4/loose.dtd">
@@ -97,12 +98,12 @@ class Generator
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="$this->css" media="screen" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+      $this->css
+    </style>
   </head>
-  <body>
-    <article>
-        $markdown
-    </article>
+  <body class="markdown-body">
+    $markdown
   </body>
 </html>
 EOD;
@@ -115,7 +116,7 @@ EOD;
         $dompdf->render();
 
         $this->filesystem->dumpFile($this->pdf, $dompdf->output());
-        $this->logger->info(sprintf('PDF Created: %s', $this->pdf));
+        // $this->logger->info(sprintf('PDF Created: %s', $this->pdf));
 
         return true;
     }
@@ -127,7 +128,7 @@ EOD;
      */
     public function setMarkdownFile($file)
     {
-        $this->markdown =  $file;
+        $this->markdown = $file;
     }
 
     /**
@@ -137,7 +138,7 @@ EOD;
      */
     public function setPDFFile($file)
     {
-        $this->pdf =  $file;
+        $this->pdf = $file;
     }
 
     /**
@@ -147,7 +148,7 @@ EOD;
      */
     public function setCSSFile($file)
     {
-        $this->css =  $file;
+        $this->css = $file;
     }
 
     /**

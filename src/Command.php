@@ -6,7 +6,6 @@ use Jewei\Markdown2pdf\Generator;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
-use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -42,7 +41,7 @@ class Command extends SymfonyCommand
                 null,
                 InputOption::VALUE_OPTIONAL,
                 'Determine which CSS file to load.',
-                'example.css'
+                'github.css'
             )
         ;
     }
@@ -57,7 +56,7 @@ class Command extends SymfonyCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $logger = new Logger('Markdown2pdf');
-        $logger->pushHandler(new StreamHandler(__DIR__.'/../generator.log', Logger::DEBUG));
+        $logger->pushHandler(new StreamHandler(__DIR__ . '/../generator.log', Logger::DEBUG));
 
         $filesystem = new Filesystem();
 
@@ -69,7 +68,9 @@ class Command extends SymfonyCommand
         if (!$generator->convert()) {
             $output->writeln(sprintf('<error>Error: %s</error>', $generator->getError()));
         } else {
-            $output->writeln(sprintf('Created the PDF file <info>%s</info>.', $input->getArgument('output_file')));
+            $output->writeln(sprintf('<info>Created the PDF file %s</info>.', $input->getArgument('output_file')));
         }
+
+        return SymfonyCommand::SUCCESS;
     }
 }
