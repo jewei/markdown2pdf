@@ -3,25 +3,32 @@
 namespace Jewei\Markdown2pdf;
 
 use Dompdf\Dompdf;
-use League\CommonMark\CommonMarkConverter;
-use Psr\Log\LoggerInterface;
+use Dompdf\Options;
+use League\CommonMark\ConverterInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 class Generator
 {
     /**
-     * The filesystem instance.
+     * The pdf converter.
      *
-     * @var \Filesystem
+     * @var \Dompdf\Dompdf
      */
-    private $filesystem;
+    private $pdf;
 
     /**
-     * The logger interface implementation.
+     * The markdown converter.
      *
-     * @var \LoggerInterface
+     * @var \League\CommonMark\ConverterInterface
      */
-    private $logger;
+    private $converter;
+
+    /**
+     * The filesystem.
+     *
+     * @var \Symfony\Component\Filesystem\Filesystem
+     */
+    private $filesystem;
 
     /**
      * The markdown file.
@@ -35,7 +42,7 @@ class Generator
      *
      * @var  string
      */
-    private $pdf;
+    private $ouput;
 
     /**
      * The css file.
@@ -45,131 +52,114 @@ class Generator
     private $css;
 
     /**
-     * The error message.
-     *
-     * @var  string
-     */
-    private $error;
-
-    /**
      * Create a new generator instance.
      *
      * @return void
      */
-    public function __construct(Filesystem $filesystem, LoggerInterface $logger)
+    public function __construct(Dompdf $pdf, ConverterInterface $converter, Filesystem $filesystem)
     {
+        $this->pdf = $pdf;
+        $this->converter = $converter;
         $this->filesystem = $filesystem;
-        $this->logger = $logger;
     }
 
     /**
      * Run the generator to convert .md to .pdf.
      *
-     * @param  string  $source
-     * @param  string  $destination
-     * @param  string  $style
-     * @return mixed
+     * @return void
+     * @throws \Jewei\Markdown2pdf\Exception
      */
-    public function convert()
+    public function convert(): void
     {
+        /**
+         * Get the user data ready.
+         */
         if (!$markdown = file_get_contents($this->markdown)) {
-            $this->setError(sprintf('File empty or cannot read: %s', $this->markdown));
-            return false;
+            throw new Exception(sprintf('File empty or cannot read: %s', $this->markdown));
         }
-
-        $this->logger->debug(sprintf('Mardown: %s', $this->markdown));
 
         if (!$css = file_get_contents($this->css)) {
-            $this->setError(sprintf('File empty or cannot read: %s', $this->css));
-            return false;
+            throw new Exception(sprintf('File empty or cannot read: %s', $this->css));
         }
 
-        $this->logger->debug(sprintf('CSS: %s', $this->css));
+        if (!$stub = file_get_contents($this->stub)) {
+            throw new Exception(sprintf('File empty or cannot read: %s', $this->stub));
+        }
 
-        $parser = new CommonMarkConverter();
-        $markdown = $parser->convertToHtml($markdown);
+        /**
+         * Covert Markdown to HTML.
+         */
+        $content = $this->converter->convert($markdown);
 
-        $this->css = file_get_contents(dirname(__DIR__) . '/' . $this->css);
+        $html = str_replace(
+            ['{{ css }}', '{{ content }}'],
+            [$css, $content],
+            $stub
+        );
 
-        $html = <<<EOD
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-    "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-  <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style type="text/css">
-      $this->css
-    </style>
-  </head>
-  <body class="markdown-body">
-    $markdown
-  </body>
-</html>
-EOD;
+        /**
+         * Convert HTML to PDF.
+         */
+        $this->pdf->setOptions(new Options([
+            'logOutputFile' => false,
+            'isRemoteEnabled' => true,
+            'isFontSubsettingEnabled' => false,
+        ]));
+        $this->pdf->loadHtml($html);
+        $this->pdf->render();
 
-        $this->logger->debug(sprintf('Raw HTML: %s', $html));
-
-        // Instantiate and use the dompdf class
-        $dompdf = new Dompdf();
-        $dompdf->loadHtml($html);
-        $dompdf->render();
-
-        $this->filesystem->dumpFile($this->pdf, $dompdf->output());
-        // $this->logger->info(sprintf('PDF Created: %s', $this->pdf));
-
-        return true;
+        $this->filesystem->dumpFile($this->ouput, $this->pdf->output());
     }
 
     /**
      * Set the markdown file.
      *
      * @param  string  $file
+     * @return $this
      */
-    public function setMarkdownFile($file)
+    public function setMarkdown(string $file)
     {
         $this->markdown = $file;
+
+        return $this;
     }
 
     /**
      * Set the PDF file.
      *
      * @param  string  $file
+     * @return $this
      */
-    public function setPDFFile($file)
+    public function setPdf(string $file)
     {
-        $this->pdf = $file;
+        $this->ouput = $file;
+
+        return $this;
     }
 
     /**
      * Set the CSS file.
      *
      * @param  string  $file
+     * @return $this
      */
-    public function setCSSFile($file)
+    public function setCss(string $file)
     {
         $this->css = $file;
+
+        return $this;
     }
 
     /**
-     * Set the error message.
+     * Set the stub file.
      *
-     * @param  string
-     * @return void
+     * @param  string  $file
+     * @return $this
      */
-    public function setError($error)
+    public function setStub(string $file)
     {
-        $this->error = $error;
-        $this->logger->error($this->error);
-    }
+        $this->stub = $file;
 
-    /**
-     * Get the error message.
-     *
-     * @return string
-     */
-    public function getError()
-    {
-        return $this->error;
+        return $this;
     }
 }

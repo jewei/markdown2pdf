@@ -2,9 +2,10 @@
 
 namespace Jewei\Markdown2pdf;
 
+use Dompdf\Dompdf;
+use Exception;
 use Jewei\Markdown2pdf\Generator;
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
+use League\CommonMark\GithubFlavoredMarkdownConverter;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -41,34 +42,40 @@ class Command extends SymfonyCommand
                 null,
                 InputOption::VALUE_OPTIONAL,
                 'Determine which CSS file to load.',
-                'github.css'
-            )
-        ;
+                'primer.css'
+            );
     }
 
     /**
      * Execute the console command.
      *
-     * @param  \Symfony\Component\Console\Input\InputInterface  $input
-     * @param  \Symfony\Component\Console\Output\OutputInterface  $output
-     * @return mixed
+     * @param \Symfony\Component\Console\Input\InputInterface $input
+     * @param \Symfony\Component\Console\Output\OutputInterface $output
+     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $logger = new Logger('Markdown2pdf');
-        $logger->pushHandler(new StreamHandler(__DIR__ . '/../generator.log', Logger::DEBUG));
+        $generator = new Generator(
+            new Dompdf(),
+            new GithubFlavoredMarkdownConverter([
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+            ]),
+            new Filesystem()
+        );
 
-        $filesystem = new Filesystem();
+        $generator
+            ->setMarkdown($input->getArgument('input_file'))
+            ->setPdf($input->getArgument('output_file'))
+            ->setCss($input->getOption('css'))
+            ->setStub(dirname(__DIR__) . '/src/html.stub');
 
-        $generator = new Generator($filesystem, $logger);
-        $generator->setMarkdownFile($input->getArgument('input_file'));
-        $generator->setPDFFile($input->getArgument('output_file'));
-        $generator->setCSSFile($input->getOption('css'));
-
-        if (!$generator->convert()) {
-            $output->writeln(sprintf('<error>Error: %s</error>', $generator->getError()));
-        } else {
+        try {
+            $generator->convert();
             $output->writeln(sprintf('<info>Created the PDF file %s</info>.', $input->getArgument('output_file')));
+        } catch (Exception $e) {
+            $output->writeln(sprintf('<error>Error: %s</error>', $e->getMessage()));
+            return SymfonyCommand::FAILURE;
         }
 
         return SymfonyCommand::SUCCESS;
